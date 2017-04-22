@@ -3,18 +3,21 @@ import sys
 from subprocess import Popen
 
 # PyQT5 Widgets and accessories
-from PyQt5.QtWidgets import (
-    QApplication,
-    QWidget,
-    QToolTip,
-    QLineEdit,
-    QPushButton,
-    QHBoxLayout,
-    QVBoxLayout,
-    QDesktopWidget
-)
-from PyQt5.QtGui import QFont
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+
+# from PyQt5.QtWidgets import (
+#     QApplication,
+#     QWidget,
+#     QToolTip,
+#     QLineEdit,
+#     QPushButton,
+#     QHBoxLayout,
+#     QVBoxLayout,
+#     QDesktopWidget,
+#     QScrollArea
+# )
+# from PyQt5.QtGui import QFont
 import qdarkstyle
 
 # Library for handling config.vdf
@@ -53,7 +56,8 @@ class Application(QWidget):
     def OnClick_LoadConfig(self):
         print("Loading Configuration")
 
-        rootPath = self.txtLoadConfigurationPath.text()
+        # rootPath = self.txtLoadConfigurationPath.text()
+        rootPath = "C:\\Program Files (x86)\\Steam"
 
         if rootPath == "":
             print("No root path set. Defaulting to 'C:\\Program Files (x86)\\Steam'")
@@ -86,7 +90,7 @@ class Application(QWidget):
         for game in self.gamesList:
             btnGameButton = QPushButton(game.name, self)
             btnGameButton.clicked.connect(self.make_OnClick_LaunchGame(game.appid))
-            self.vboxGamesList.addWidget(btnGameButton)
+            self.vboxGamesListContainer.addWidget(btnGameButton)
 
     def generateLoadConfigurationView(self):
         QToolTip.setFont(QFont('SansSerif', 10))
@@ -106,9 +110,30 @@ class Application(QWidget):
         return hbox
 
     def generateGameListView(self):
-        self.vboxGamesList = QVBoxLayout()
+        self.vboxGamesListScrollArea = QScrollArea(self)
+        self.vboxWidgetContainer = QWidget(self)
+        self.vboxGamesListContainer = QVBoxLayout()
 
-        return self.vboxGamesList
+        self.vboxWidgetContainer.setLayout(self.vboxGamesListContainer)
+        self.vboxGamesListScrollArea.setWidget(self.vboxWidgetContainer)
+
+        self.vboxWidgetContainer.setMinimumWidth(600)
+        self.vboxWidgetContainer.move(80, 160)
+        # self.vboxGamesListContainer.move(80, 100)
+
+        return self.vboxWidgetContainer
+
+    def generateSearchField(self):
+        self.txtSearchField = QLineEdit(self)
+        self.txtSearchField.textChanged.connect(self.OnSearchTextUpdated)
+
+        return self.txtSearchField
+
+    def generateMainLayout(self):
+        pass
+
+    def OnSearchTextUpdated(self):
+        pass
 
     def center(self):
         qr = self.frameGeometry()
@@ -117,16 +142,18 @@ class Application(QWidget):
         self.move(qr.topLeft())
 
     def initUI(self):
+        # vbox.addLayout(self.generateLoadConfigurationView())
         vbox = QVBoxLayout()
-        vbox.addLayout(self.generateLoadConfigurationView())
-        vbox.addLayout(self.generateGameListView())
-        vbox.addStretch(1)
+        vbox.addWidget(self.generateSearchField())
+        vbox.addWidget(self.generateGameListView())
 
         self.setLayout(vbox)
 
         self.resize(800, 600)
+        self.setMinimumSize(800, 600)
         self.center()
         self.setWindowTitle('pySteamLauncher')
+        self.setWindowIcon(QIcon('logo.png'))
         self.show()
 
         # Placeholder to auto-initialize

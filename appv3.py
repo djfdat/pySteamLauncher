@@ -9,7 +9,6 @@ from PyQt5.QtGui import *
 
 import vdf
 
-
 class Game(object):
     def __init__(self, gameData):
         self.name = gameData["name"]
@@ -74,13 +73,6 @@ for game in gamesList:
 
 # Our main window will be a QListView
 list = QListView()
-list.setWindowTitle('pySteamLauncher')
-list.setMinimumSize(800, 600)
-# list.setWindowIcon(QtGui.QIcon('logo.png'))
-
-list.doubleClicked.connect(OnDoubleClick) # Launch Game
-
-
 # Create an empty model for the list's data
 model = QStandardItemModel(list)
 
@@ -89,9 +81,15 @@ for gameName, gameId in Games.items():
     game.setEditable(False)
     model.appendRow(game)
 
+list.doubleClicked.connect(OnDoubleClick) # Launch Game
 # Apply the model to the list view
 list.setModel(model)
 # Select first option by default
 list.setCurrentIndex(list.model().index(0,0)) # Show the window and run the app
+
+list.setWindowTitle('pySteamLauncher')
+list.setMinimumSize(800, 600)
+list.setWindowIcon(QIcon('logo.png'))
 list.show()
+
 app.exec_()

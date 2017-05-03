@@ -3,6 +3,7 @@ import sys
 
 from subprocess import Popen
 
+from PyQt5.QtCore import (QEvent)
 from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit,
     QTextEdit, QGridLayout, QApplication, QListView)
 from PyQt5.QtGui import (QIcon, QStandardItemModel, QStandardItem)
@@ -14,19 +15,50 @@ class Game(object):
         self.name = gameData["name"]
         self.appid = gameData["appid"]
 
-class pySteamLauncher(QWidget):
-
+class pySteamLauncherWindow(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.BuildGamesList()
         self.initUI()
 
+    def BuildGamesList(self):
+        self.steamRootPath = "C:\\Program Files (x86)\\Steam"
+        self.steamPath = self.steamRootPath + "\\steam.exe"
+        librariesPath = self.steamRootPath + "\\steamapps\\libraryfolders.vdf"
+
+        self.Games = {}
+        self.gamesList = []
+
+
+        librariesData = vdf.load(open(librariesPath))
+        libraryPaths = []
+        libraryPaths.append(self.steamRootPath + "\\steamapps\\")
+        libraryPaths.append(librariesData["LibraryFolders"]["1"] + "\\\\steamapps\\\\")
+        numPaths = self.getMaxLibraryFolder(librariesData["LibraryFolders"])
+
+        if numPaths > 0:
+            for i in range(1, numPaths):
+                libraryPaths.append(librariesData["LibraryFolders"][str(i)] + "\\\\steamapps\\\\")
+
+        for libraryPath in libraryPaths:
+            for file in os.listdir(libraryPath):
+                if file.endswith(".acf"):
+                    gameData = vdf.load(open(libraryPath + file))
+                    gameData = gameData["AppState"]
+                    self.gamesList.append(Game(gameData))
+
+        for game in self.gamesList:
+            self.Games[game.name] = game.appid
+
+    def GetSelectedGame(self):
+        return self.list.selectedIndexes()[0].model().item(self.list.selectedIndexes()[0].row()).text()
+
     def GetSelectedGameID(self):
-        return Games[self.list.selectedIndexes()[0].model().item(self.list.selectedIndexes()[0].row()).text()]
+        return self.Games[self.GetSelectedGame()]
 
     def OnDoubleClick(self):
         gameId = self.GetSelectedGameID()
-        print("Launching game: " + str(gameId))
+        print("Launching Game: " + str(gameId))
         Popen([self.steamPath, "steam://run/" + str(gameId)])
 
     def SetSelectedGame(self, selected, deselected):
@@ -50,40 +82,11 @@ class pySteamLauncher(QWidget):
 
         grid.addWidget(searchEdit, 1, 0)
 
-        self.steamRootPath = "C:\\Program Files (x86)\\Steam"
-        self.steamPath = self.steamRootPath + "\\steam.exe"
-        librariesPath = self.steamRootPath + "\\steamapps\\libraryfolders.vdf"
-
-
-        Games = {}
-        gamesList = []
-
-
-        librariesData = vdf.load(open(librariesPath))
-        libraryPaths = []
-        libraryPaths.append(self.steamRootPath + "\\steamapps\\")
-        libraryPaths.append(librariesData["LibraryFolders"]["1"] + "\\\\steamapps\\\\")
-        numPaths = self.getMaxLibraryFolder(librariesData["LibraryFolders"])
-
-        if numPaths > 0:
-            for i in range(1, numPaths):
-                libraryPaths.append(librariesData["LibraryFolders"][str(i)] + "\\\\steamapps\\\\")
-
-        for libraryPath in libraryPaths:
-            for file in os.listdir(libraryPath):
-                if file.endswith(".acf"):
-                    gameData = vdf.load(open(libraryPath + file))
-                    gameData = gameData["AppState"]
-                    gamesList.append(Game(gameData))
-
-        for game in gamesList:
-            Games[game.name] = game.appid
-
         self.list = QListView()
         # Create an empty model for the list's data
         model = QStandardItemModel(self.list)
 
-        for gameName, gameId in Games.items():
+        for gameName, gameId in self.Games.items():
             game = QStandardItem(gameName)
             game.setEditable(False)
             model.appendRow(game)
@@ -102,9 +105,30 @@ class pySteamLauncher(QWidget):
         self.setWindowIcon(QIcon('logo.png'))
         self.show()
 
+class pySteamLauncher(QApplication):
+    def __init__(self, args):
+        super(pySteamLauncher, self).__init__(args)
+        self.window = pySteamLauncherWindow()
+
+    def notify(self, receiver, event):
+        if (event.type() == QEvent.KeyPress):
+            print(type(receiver))
+            if (type(receiver) != "<class 'PyQt5.QtGui.QWindow'>"):
+                pass
+            elif (event.key() == 16777216): # Escape
+                self.quit()
+            elif (event.key() == 16777220 or event.key() == 16777221): #Return and Enter
+                self.window.OnDoubleClick()
+                self.quit()
+            elif (event.key() == 16777235): # Up
+                pass
+            elif (event.key() == 16777237): # Down
+                pass
+
+        #Call Base Class Method to Continue Normal Event Processing
+        return super(pySteamLauncher, self).notify(receiver, event)
+
 
 if __name__ == '__main__':
-
-    app = QApplication(sys.argv)
-    ex = pySteamLauncher()
+    app = pySteamLauncher(sys.argv)
     sys.exit(app.exec_())

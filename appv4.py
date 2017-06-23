@@ -3,10 +3,9 @@ import sys
 
 from subprocess import Popen
 
-from PyQt5.QtCore import (QEvent)
-from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit,
-    QTextEdit, QGridLayout, QApplication, QListView)
-from PyQt5.QtGui import (QIcon, QStandardItemModel, QStandardItem)
+from Qt.QtCore import QEvent
+from Qt.QtWidgets import QWidget, QLineEdit, QGridLayout, QApplication, QListView
+from Qt.QtGui import QIcon, QStandardItemModel, QStandardItem
 
 import vdf
 
@@ -60,6 +59,7 @@ class pySteamLauncherWindow(QWidget):
         gameId = self.GetSelectedGameID()
         print("Launching Game: " + str(gameId))
         Popen([self.steamPath, "steam://run/" + str(gameId)])
+        sys.exit(app.exec_())
 
     def SetSelectedGame(self, selected, deselected):
         print("working")
@@ -94,7 +94,7 @@ class pySteamLauncherWindow(QWidget):
         self.list.doubleClicked.connect(self.OnDoubleClick) # Launch Game
         # Apply the model to the list view
         self.list.setModel(model)
-        self.list.setCurrentIndex(self.list.model().index(0,0)) # Show the window and run the app
+        self.list.setCurrentIndex(self.list.model().index(0, 0)) # Show the window and run the app
 
         grid.addWidget(self.list, 2, 0)
 
@@ -111,18 +111,18 @@ class pySteamLauncher(QApplication):
         self.window = pySteamLauncherWindow()
 
     def notify(self, receiver, event):
-        if (event.type() == QEvent.KeyPress):
+        if event.type() == QEvent.KeyPress:
             print(type(receiver))
-            if (type(receiver) != "<class 'PyQt5.QtGui.QWindow'>"):
+            if type(receiver) != "<class 'PyQt5.QtGui.QWindow'>":
                 pass
-            elif (event.key() == 16777216): # Escape
+            elif event.key() == 16777216: # Escape
                 self.quit()
-            elif (event.key() == 16777220 or event.key() == 16777221): #Return and Enter
+            elif event.key() == 16777220 or event.key() == 16777221: #Return and Enter
                 self.window.OnDoubleClick()
                 self.quit()
-            elif (event.key() == 16777235): # Up
+            elif event.key() == 16777235: # Up
                 pass
-            elif (event.key() == 16777237): # Down
+            elif event.key() == 16777237: # Down
                 pass
 
         #Call Base Class Method to Continue Normal Event Processing

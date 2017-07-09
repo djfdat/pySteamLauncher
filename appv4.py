@@ -21,6 +21,7 @@ class pySteamLauncherWindow(QWidget):
         self.initUI()
 
     def BuildGamesList(self):
+        # Setup default paths
         self.steamRootPath = "C:\\Program Files (x86)\\Steam"
         self.steamPath = self.steamRootPath + "\\steam.exe"
         librariesPath = self.steamRootPath + "\\steamapps\\libraryfolders.vdf"
@@ -28,17 +29,21 @@ class pySteamLauncherWindow(QWidget):
         self.Games = {}
         self.gamesList = []
 
-
+        # Convert vdf library data to all library paths
         librariesData = vdf.load(open(librariesPath))
         libraryPaths = []
+        # First add default path
         libraryPaths.append(self.steamRootPath + "\\steamapps\\")
+        # Then additional libraries
         libraryPaths.append(librariesData["LibraryFolders"]["1"] + "\\\\steamapps\\\\")
         numPaths = self.getMaxLibraryFolder(librariesData["LibraryFolders"])
 
+        # Iterate over all the library paths
         if numPaths > 0:
             for i in range(1, numPaths):
                 libraryPaths.append(librariesData["LibraryFolders"][str(i)] + "\\\\steamapps\\\\")
 
+        # Extract games from libraries
         for libraryPath in libraryPaths:
             for file in os.listdir(libraryPath):
                 if file.endswith(".acf"):
@@ -46,6 +51,7 @@ class pySteamLauncherWindow(QWidget):
                     gameData = gameData["AppState"]
                     self.gamesList.append(Game(gameData))
 
+        # Convert to game object
         for game in self.gamesList:
             self.Games[game.name] = game.appid
 
